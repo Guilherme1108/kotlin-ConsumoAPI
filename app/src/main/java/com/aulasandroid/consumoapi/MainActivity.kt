@@ -1,5 +1,6 @@
 package com.aulasandroid.consumoapi
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -114,25 +115,41 @@ fun CepScreen(modifier: Modifier = Modifier) {
                     label = { Text(text = "Qual CEP está buscando?") },
                     trailingIcon = {
                         IconButton( onClick = {
-                            var call = RetrofitFactory().getEnderecoService().getEnderecoByCep(
-                                cep = cepState
-                            )
+                            var caracteresCep = cepState.toList()
+                            var temLetra = false
 
-                            call.enqueue(object : Callback<Endereco> {
-                                override fun onResponse(
-                                    call: Call<Endereco>,
-                                    response: Response<Endereco>
-                                ) {
-                                    endereco = response.body()!!
+                            caracteresCep.forEach { caractere ->
+                                if (caractere.isLetter()) {
+                                    temLetra = true
                                 }
+                            }
 
-                                override fun onFailure(
-                                    call: Call<Endereco>,
-                                    t: Throwable
-                                ) {
-                                    Log.i("TESTE", "${t.message}")
-                                }
-                            })
+                            if (temLetra == false) {
+                                var call = RetrofitFactory().getEnderecoService().getEnderecoByCep(
+                                    cep = cepState.trim()
+                                )
+
+                                call.enqueue(object : Callback<Endereco> {
+                                    override fun onResponse(
+                                        call: Call<Endereco>,
+                                        response: Response<Endereco>
+                                    ) {
+                                        endereco = response.body()!!
+                                        listaEnderecos = listOf(endereco)
+                                    }
+
+                                    override fun onFailure(
+                                        call: Call<Endereco>,
+                                        t: Throwable
+                                    ) {
+                                        Log.i("TESTE", "${t.message}")
+                                    }
+                                })
+                            } else {
+                                Log.i("TESTE", "tem letra nesse CEP ai!")
+                            }
+
+
 
                         } ) {
                             Icon(
@@ -196,7 +213,7 @@ fun CepScreen(modifier: Modifier = Modifier) {
                                 call: Call<List<Endereco>>,
                                 response: Response<List<Endereco>>
                             ) {
-//                                Log.i("TESTE", "${response.body()}")
+                                Log.i("TESTE", "${response.body()}")
 
                                 listaEnderecos = response.body()!!
                             }
@@ -223,10 +240,6 @@ fun CepScreen(modifier: Modifier = Modifier) {
         ) {
             items(listaEnderecos) {
                 CardEndereco(it)
-            }
-
-            item(endereco) {
-                CardEndereco(endereco)
             }
         }
     }
