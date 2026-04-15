@@ -32,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import com.aulasandroid.consumoapi.model.Endereco
 import com.aulasandroid.consumoapi.service.RetrofitFactory
 import com.aulasandroid.consumoapi.ui.theme.ConsumoAPITheme
+import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -76,6 +78,8 @@ fun CepScreen(modifier: Modifier = Modifier) {
     var endereco by remember {
         mutableStateOf(Endereco())
     }
+
+    var scope = rememberCoroutineScope()
 
     Column(
         modifier = modifier.fillMaxWidth()
@@ -203,29 +207,39 @@ fun CepScreen(modifier: Modifier = Modifier) {
                     )
 
                     IconButton( onClick = {
-                        var call = RetrofitFactory().getEnderecoService().getEnderecosByUfCidadeRua(
-                            uf = ufState,
-                            cidade = cidadeState,
-                            rua = ruaState
-                        )
+                        scope.launch {
 
-                        call.enqueue(object : Callback<List<Endereco>> {
-                            override fun onResponse(
-                                call: Call<List<Endereco>>,
-                                response: Response<List<Endereco>>
-                            ) {
-                                Log.i("TESTE", "${response.body()}")
-
-                                listaEnderecos = response.body()!!
+                            try {
+                                listaEnderecos = RetrofitFactory().getEnderecoService().getEnderecosByUfCidadeRua(
+                                    uf = ufState,
+                                    cidade = cidadeState,
+                                    rua = ruaState
+                                )
+                            } catch (e: Exception) {
+                                Log.e("ERROR", e.message ?: "")
                             }
 
-                            override fun onFailure(
-                                call: Call<List<Endereco>>,
-                                t: Throwable
-                            ) {
-                                Log.i("TESTE", "${t.message}")
-                            }
-                        })
+                        }
+
+
+
+//                        call.enqueue(object : Callback<List<Endereco>> {
+//                            override fun onResponse(
+//                                call: Call<List<Endereco>>,
+//                                response: Response<List<Endereco>>
+//                            ) {
+//                                Log.i("TESTE", "${response.body()}")
+//
+//                                listaEnderecos = response.body()!!
+//                            }
+//
+//                            override fun onFailure(
+//                                call: Call<List<Endereco>>,
+//                                t: Throwable
+//                            ) {
+//                                Log.i("TESTE", "${t.message}")
+//                            }
+//                        })
                     } ) {
                         Icon(
                             imageVector = Icons.Default.Search,
